@@ -71,4 +71,73 @@ col4.metric("Avg ROI", f"{avg_roi:.1f}%")
 col5.metric("Conversions", f"{total_conv:,}")
 col6.metric("Avg Order Value", f"${aov:,.2f}")
 
-st.markdown("---
+st.write("---")
+
+# Dashboard Tabs
+tab1, tab2, tab3, tab4 = st.tabs([
+    "📊 Service Profitability & High-ROI", 
+    "👥 Client Retention & Churn Risk", 
+    "👷 Operations & Technicians", 
+    "📋 Raw Data & Export"
+])
+
+# Tab 1: Service Profitability
+with tab1:
+    c1, c2 = st.columns(2)
+    
+    top_services = filtered_df.groupby('Service Category')['Revenue'].sum().nlargest(top_n).reset_index()
+    fig_services = px.bar(
+        top_services, x='Revenue', y='Service Category', orientation='h',
+        title=f"Top {top_n} Service Categories by Revenue",
+        color='Revenue', color_continuous_scale='Blues'
+    )
+    fig_services.update_layout(yaxis={'categoryorder':'total ascending'})
+    c1.plotly_chart(fig_services, use_container_width=True)
+
+    fig_scatter = px.scatter(
+        filtered_df, x='Ad Spend', y='Revenue', color='Client Type',
+        size='Conversions', hover_data=['Service Category', 'Technician'],
+        title="Ad Spend vs Revenue (High-ROI Channels Identification)"
+    )
+    c2.plotly_chart(fig_scatter, use_container_width=True)
+
+# Tab 2: Client Retention
+with tab2:
+    c1, c2 = st.columns(2)
+    
+    client_summary = filtered_df.groupby('Client Type').agg(
+        Revenue=('Revenue', 'sum'),
+        Conversions=('Conversions', 'sum'),
+        Jobs=('Revenue', 'count')
+    ).reset_index()
+
+    fig_pie = px.pie(client_summary, values='Revenue', names='Client Type', title="Revenue Share by Client Type", hole=0.4)
+    c1.plotly_chart(fig_pie, use_container_width=True)
+
+    fig_conv = px.bar(client_summary, x='Client Type', y='Conversions', color='Client Type', title="Total Conversions by Client Type")
+    c2.plotly_chart(fig_conv, use_container_width=True)
+
+# Tab 3: Operations & Technicians
+with tab3:
+    c1, c2 = st.columns(2)
+    
+    tech_summary = filtered_df.groupby('Technician')['Revenue'].sum().nlargest(10).reset_index()
+    fig_tech = px.bar(tech_summary, x='Technician', y='Revenue', title="Top 10 Technicians by Revenue", color='Revenue')
+    c1.plotly_chart(fig_tech, use_container_width=True)
+
+    time_summary = filtered_df.groupby('Time')['Revenue'].sum().reset_index()
+    fig_time = px.bar(time_summary, x='Time', y='Revenue', title="Revenue by Time of Day", color='Time')
+    c2.plotly_chart(fig_time, use_container_width=True)
+
+# Tab 4: Raw Data & Download
+with tab4:
+    st.subheader("Filtered Dataset View")
+    st.dataframe(filtered_df, use_container_width=True)
+    
+    csv_data = filtered_df.to_csv(index=False).encode('utf-8')
+    st.download_button(
+        label="📥 Download Filtered Data as CSV",
+        data=csv_data,
+        file_name="fixit_services_filtered_data.csv",
+        mime="text/csv"
+    )
