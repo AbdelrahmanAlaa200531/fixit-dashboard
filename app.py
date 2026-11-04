@@ -9,12 +9,18 @@ st.set_page_config(page_title="FixIt Services - Profitability Dashboard", layout
 st.title("🛠️ FixIt Services - Service Profitability & Retention Dashboard")
 st.markdown("Track client engagement, detect churn risk, and analyze high-ROI home repair channels.")
 
-# Load Data
+# Load Data (تحديد طريقة القراءة تلقائياً)
 @st.cache_data
 def load_data():
     file_path = "data.xlsx"
     if os.path.exists(file_path):
-        df = pd.read_excel(file_path)
+        try:
+            # محاولة قراءة الملف كـ Excel
+            df = pd.read_excel(file_path, engine='openpyxl')
+        except Exception:
+            # لو فشل (عشان هو ملف CSV في الأصل)، هيقرأه كـ CSV
+            df = pd.read_csv(file_path)
+            
         df['Service Category'] = df['Service Category'].fillna("Uncategorized")
         df['Date'] = pd.to_datetime(df['Date'])
         df['Profit'] = df['Revenue'] - df['Ad Spend']
