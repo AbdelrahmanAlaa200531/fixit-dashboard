@@ -12,17 +12,22 @@ st.markdown("Track client engagement, detect churn risk, and analyze high-ROI ho
 # Load Data
 @st.cache_data
 def load_data():
-    file_path = "FixIt Services_Data.xlsx"
-    if not os.path.exists(file_path):
-        file_path = "FixIt_Services_Data.xlsx"
+    # التجربة بالاسمين لتفادي أي اختلاف في المسافات أو الشرطات
+    files_to_check = [
+        "FixIt Services_Data.xlsx",
+        "FixIt_Services_Data.xlsx"
+    ]
     
-    df = pd.read_excel(file_path)
-    df['Service Category'] = df['Service Category'].fillna("Uncategorized")
-    df['Date'] = pd.to_datetime(df['Date'])
-    df['Profit'] = df['Revenue'] - df['Ad Spend']
-    # Avoid zero division
-    df['ROI (%)'] = ((df['Revenue'] - df['Ad Spend']) / df['Ad Spend'].replace(0, 1)) * 100
-    return df
+    for file_path in files_to_check:
+        if os.path.exists(file_path):
+            df = pd.read_excel(file_path)
+            df['Service Category'] = df['Service Category'].fillna("Uncategorized")
+            df['Date'] = pd.to_datetime(df['Date'])
+            df['Profit'] = df['Revenue'] - df['Ad Spend']
+            df['ROI (%)'] = ((df['Revenue'] - df['Ad Spend']) / df['Ad Spend'].replace(0, 1)) * 100
+            return df
+            
+    raise FileNotFoundError("لم يتم العثور على ملف الإكسيل ببيانات FixIt داخل المستودع.")
 
 try:
     df = load_data()
